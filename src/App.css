@@ -1,0 +1,27 @@
+#articulo{
+  border: 0.1rem solid black;
+  text-align: center;
+  width: 8rem;
+  height: 13rem;
+  margin: 0.5rem;
+  padding: 0rem;
+}
+#articulo>img{
+  width: 5rem;
+  height: 5rem;
+}
+h1,p{
+  margin: 0rem;	
+}
+.arriba{
+  background-color: greenyellow;
+}
+.arriba>button, span{
+  margin-inline: 1rem ;
+}
+.abajo{
+  background-color: greenyellow;
+}
+.abajo>button{
+  margin-inline: 2rem ;
+}
