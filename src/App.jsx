@@ -1,12 +1,71 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import "bootstrap/dist/css/bootstrap.css"
 import "bootstrap/dist/js/bootstrap.js"
-import React, {useEffect} from "react";
+import { useEffect } from "react";
 
 function App() {
+//console.log("prueba")
+
+const [messageHistory, setMessageHistory] = useState([]);
+const [count, setCount] = useState(0);
+
+useEffect(() => {
+  //para preveninr que se ejecute const txb = document.getElementById("txb") en el renderizado inicial
+  //esto pq o sino va a dar null, y dará error
+  //solo se ejecutará si txb ya se renderizó
+  if(document.getElementById("txb") != null) {
+    const txb = document.getElementById("txb")
+    const txa = document.getElementById("txa")
+    sendMessage(txb.value) //se envía a la IA lo que se escribe en el texbox
+  }
+}, [count]); //se ejecuta cuando count aumenta
+
+async function sendForm(formData) {
+    const message = formData.get('message').trim();
+    if (!message) return;
+    sendMessage(message);
+}
+
+async function sendMessage(message) {
+    const updatedHistory = [...messageHistory, { sender: "user", text: message }];
+    try {
+        const reply = await askGemini(updatedHistory);
+        setMessageHistory([...updatedHistory, { sender: "model", text: reply }]);
+    } catch (error) {
+        console.log("Error al enviar el mensaje:", error);
+        setMessageHistory([...updatedHistory, { sender: "model", text: "Lo siento, ocurrió un error al procesar tu mensaje." }]);
+    }
+}
+
+async function askGemini(messageHistory) {
+    const apiKey = "AIzaSyDPn_DISqUOWP_N9wYswHQN_m9Y31sJ0Ps";
+    const content = messageHistory.map(msg => ({
+        role: msg.sender === "user" ? "user" : "model",
+        parts: [{ text: msg.text }]
+    }));
+    const body = {
+        contents: content
+    };
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+    });
+    if (!response.ok) {
+        const error = await response.text();
+        console.error("Gemini error:", error);
+        throw new Error("Error en la API de Gemini");
+    }
+    const data = await response.json();
+    const texto_respuesta_de_gemini = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "No se obtuvo respuesta del modelo."
+    txa.value = texto_respuesta_de_gemini
+}
+
+
+
 
   useEffect(() => {
     let numpag = 1
@@ -35,10 +94,9 @@ function App() {
         offset = offset + limit
         obtenerpost()
 
-        //botón se reactiva despues de 250 milisegundos
         setTimeout(()=>{
             buttonpagsgte.disabled = false
-        }, 500) //1000 milisegundos son 1 segundo
+        }, 250) //1000 milisegundos son 1 segundo
     }
 
     document.getElementById("buttonpagant").onclick = function pagant(){
@@ -61,18 +119,14 @@ function App() {
         }  
     }
 
-    //https://pokeapi.co/api/v2/pokemon/?offset=0&limit=10277 //máximo de pokemones
-
     async function obtenerpost(){
         try{
-            contenedor.innerHTML = "" //NO PREVIENE QUE SE CARGEN MÁS POKEMONES DE LO QUE SE DEBE AL PRESIONAR RÁPIDO EK BOTÓN DE PÁGINA SGTE
-            //https://pokeapi.co/api/v2/pokemon/?offset=50&limit=50 offset 50 parte desde el objeto 51
+            contenedor.innerHTML = ""
             const respuesta = await fetch(`https://pokeapi.co/api/v2/pokemon/?offset=${offset}&limit=${limit}`) //se puede pasar el offset como variable js
             const datos = await respuesta.json()
             
             datos.results.forEach((pokemon) => {
                 async function obtenerpostpokemon(){
-                    //const respuesta2 = await fetch("https://pokeapi.co/api/v2/pokemon/1/") //con este si funciona
                     const respuesta2 = await fetch(`${pokemon.url}`) //colocar ` ` en lugar de " ", o sino aparece error CORS
                     const datospokemon = await respuesta2.json()
                     contenedor.innerHTML +=
@@ -84,7 +138,9 @@ function App() {
                                 <p><button>LIKE</button></p>			
                         </div>			
                     `
+
                     setTimeout(()=>{
+
                         const chat = document.getElementById(`${pokemon.name}`) //cuando se ingresa varialbe como parametro de funciones, estas se ponen entre ` `, no entre " "
                         chat.style.backgroundColor = "blue"
                         chat.style.color = "white"
@@ -121,7 +177,14 @@ function App() {
                                     </div>
                                 </div>
                             `
+                             const btn = document.getElementById("btn")
+                             btn.onclick = function preguntar(){ 
+                                    setCount(count + 1) //aumenta count en uno cada vez que se hace click en chat
+                                    console.log(count)
+                                    console.log(messageHistory) 
+                             }
                         }
+
                     },100)
                     
                 }
@@ -319,8 +382,12 @@ function App() {
         }
     }
     obtenerpostParaBuscar()
-
+    
   }, [])
+ 
+
+
+
 
   return (
     <>
