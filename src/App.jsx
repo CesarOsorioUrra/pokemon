@@ -3,9 +3,14 @@ import './App.css'
 import "bootstrap/dist/css/bootstrap.css"
 import "bootstrap/dist/js/bootstrap.js"
 import { useEffect } from "react";
+import { DivDePokemon } from './components/DivDePokemon';
 
 function App() {
 //console.log("prueba")
+
+//ERROR SE DEBE A QUE SE DESORDENA EL ORDEN DE RENDERIZADO DESPUES DE CONVERTIR A JSON
+//COLOCAR COMPONENTES
+//PONER BOTON CON FORMA DE CORAZÓN
 
 const [messageHistory, setMessageHistory] = useState([]);
 let [count, setCount] = useState(0);
@@ -146,34 +151,34 @@ async function askGemini(messageHistory) {
                 async function obtenerpostpokemon(){
                     const respuesta2 = await fetch(`${pokemon.url}`) //colocar ` ` en lugar de " ", o sino aparece error CORS
                     const datospokemon = await respuesta2.json()
-                    contenedor.innerHTML +=
+                    contenedor.innerHTML += 
                     `
                         <div class="col col-md-2" id="articulo">
-                                <h4>${pokemon.name}</h1>
+                                <h4>${pokemon.name}</h4>
                                 <img src="${datospokemon.sprites.front_default}">
                                 <p><button id="${pokemon.name}">CHAT</button></p>
-                                <p><button id="like ${pokemon.name}">LIKE</button></p>			
+                                <p><button id="like ${pokemon.name}" class="heart">LIKE</button></p>			
                         </div>			
                     `
-
                     setTimeout(()=>{
                         //localStorage.clear()
                         const valor = localStorage.getItem(`${pokemon.name}`);
                         const like = document.getElementById(`like ${pokemon.name}`)
                         if(valor){
-                            like.style.backgroundColor = "red";
+                            like.style.setProperty('--c', 'blue'); 
                             like.style.color = "yellow";
                         }
 
                         like.onclick = function darlike(){
+                            const valor = localStorage.getItem(`${pokemon.name}`);
                             if(!valor){
                                 localStorage.setItem(`${pokemon.name}`, like.id);
-                                like.style.backgroundColor = "red";
+                                like.style.setProperty('--c', 'blue'); //Se modifica la variable de css "--c" cada vez que se hace click en corazón
                                 like.style.color = "yellow";
                             }
                             else if(valor){
                                 localStorage.removeItem(`${pokemon.name}`);
-                                like.style.backgroundColor = "buttonface";
+                                like.style.setProperty('--c', 'lightgray');
                                 like.style.color = "buttontext";
                             }
                         }
@@ -269,10 +274,10 @@ async function askGemini(messageHistory) {
                                 contenedor.innerHTML +=
                                 `
                                     <div class="col col-md-2" id="articulo">
-                                            <h4>${pokemon.name}</h1>
+                                            <h4>${pokemon.name}</h4>
                                             <img src="${datospokemon.sprites.front_default}">
                                             <p><button id="${pokemon.name}">CHAT</button></p>
-                                            <p><button>LIKE</button></p>			
+                                            <p><button id="like ${pokemon.name}" class="heart">LIKE</button></p>			
                                     </div>					
                                 `
                                 setTimeout(()=>{
@@ -281,19 +286,20 @@ async function askGemini(messageHistory) {
                                     const valor = localStorage.getItem(`${pokemon.name}`);
                                     const like = document.getElementById(`like ${pokemon.name}`)
                                     if(valor){
-                                        like.style.backgroundColor = "red";
+                                        like.style.setProperty('--c', 'blue'); 
                                         like.style.color = "yellow";
                                     }
 
                                     like.onclick = function darlike(){
+                                        const valor = localStorage.getItem(`${pokemon.name}`);
                                         if(!valor){
                                             localStorage.setItem(`${pokemon.name}`, like.id);
-                                            like.style.backgroundColor = "red";
+                                            like.style.setProperty('--c', 'blue'); //Se modifica la variable de css "--c" cada vez que se hace click en corazón
                                             like.style.color = "yellow";
                                         }
                                         else if(valor){
                                             localStorage.removeItem(`${pokemon.name}`);
-                                            like.style.backgroundColor = "buttonface";
+                                            like.style.setProperty('--c', 'lightgray');
                                             like.style.color = "buttontext";
                                         }
                                     }
@@ -346,7 +352,6 @@ async function askGemini(messageHistory) {
                                                 console.log(count)
                                                 console.log(messageHistory) 
                                         }
-                                    
                                     }
                                 },100)
                             }
@@ -385,10 +390,10 @@ async function askGemini(messageHistory) {
                                 contenedor.innerHTML +=
                                 `
                                     <div class="col col-md-2" id="articulo">
-                                            <h4>${pokemon.name}</h1>
+                                            <h4>${pokemon.name}</h4>
                                             <img src="${datospokemon.sprites.front_default}">
                                             <p><button id="${pokemon.name}">CHAT</button></p>
-                                            <p><button>LIKE</button></p>			
+                                            <p><button id="like ${pokemon.name}" class="heart">LIKE</button></p>			
                                     </div>			
                                 `
                                 setTimeout(()=>{
@@ -397,19 +402,20 @@ async function askGemini(messageHistory) {
                                     const valor = localStorage.getItem(`${pokemon.name}`);
                                     const like = document.getElementById(`like ${pokemon.name}`)
                                     if(valor){
-                                        like.style.backgroundColor = "red";
+                                        like.style.setProperty('--c', 'blue'); 
                                         like.style.color = "yellow";
                                     }
 
                                     like.onclick = function darlike(){
+                                        const valor = localStorage.getItem(`${pokemon.name}`);
                                         if(!valor){
                                             localStorage.setItem(`${pokemon.name}`, like.id);
-                                            like.style.backgroundColor = "red";
+                                            like.style.setProperty('--c', 'blue'); //Se modifica la variable de css "--c" cada vez que se hace click en corazón
                                             like.style.color = "yellow";
                                         }
                                         else if(valor){
                                             localStorage.removeItem(`${pokemon.name}`);
-                                            like.style.backgroundColor = "buttonface";
+                                            like.style.setProperty('--c', 'lightgray');
                                             like.style.color = "buttontext";
                                         }
                                     }
@@ -506,10 +512,10 @@ async function askGemini(messageHistory) {
                             contenedor.innerHTML +=
                             `
                                 <div class="col col-md-2" id="articulo">
-                                        <h4>${pokemon.name}</h1>
+                                        <h4>${pokemon.name}</h4>
                                         <img src="${datospokemon.sprites.front_default}">
                                         <p><button id="${pokemon.name}">CHAT</button></p>
-                                        <p><button>LIKE</button></p>			
+                                        <p><button id="like ${pokemon.name}" class="heart">LIKE</button></p>			
                                 </div>				
                             `
                             setTimeout(()=>{
@@ -518,19 +524,20 @@ async function askGemini(messageHistory) {
                                 const valor = localStorage.getItem(`${pokemon.name}`);
                                 const like = document.getElementById(`like ${pokemon.name}`)
                                 if(valor){
-                                    like.style.backgroundColor = "red";
+                                    like.style.setProperty('--c', 'blue'); 
                                     like.style.color = "yellow";
                                 }
 
                                 like.onclick = function darlike(){
+                                    const valor = localStorage.getItem(`${pokemon.name}`);
                                     if(!valor){
                                         localStorage.setItem(`${pokemon.name}`, like.id);
-                                        like.style.backgroundColor = "red";
+                                        like.style.setProperty('--c', 'blue'); //Se modifica la variable de css "--c" cada vez que se hace click en corazón
                                         like.style.color = "yellow";
                                     }
                                     else if(valor){
                                         localStorage.removeItem(`${pokemon.name}`);
-                                        like.style.backgroundColor = "buttonface";
+                                        like.style.setProperty('--c', 'lightgray');
                                         like.style.color = "buttontext";
                                     }
                                 }
