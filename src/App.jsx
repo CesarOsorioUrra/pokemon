@@ -8,7 +8,8 @@ function App() {
 //console.log("prueba")
 
 const [messageHistory, setMessageHistory] = useState([]);
-const [count, setCount] = useState(0);
+let [count, setCount] = useState(0);
+const [pokemonJSON, setPokemonJSON] = useState(null);
 
 useEffect(() => {
   //para preveninr que se ejecute const txb = document.getElementById("txb") en el renderizado inicial
@@ -17,7 +18,16 @@ useEffect(() => {
   if(document.getElementById("txb") != null) {
     const txb = document.getElementById("txb")
     const txa = document.getElementById("txa")
-    sendMessage(txb.value) //se envía a la IA lo que se escribe en el texbox
+
+
+    //sendMessage("Mi nombre es Juan" + txb.value) //si en textbox escribo "¿cual es mi nombre?"
+    //la ia rseponde "Tu nombre es Juan". Debe concatenarse texto y variables con "+" para influir la respuesta de la IA
+    console.log(pokemonJSON)
+    sendMessage("Tu nombre es: " + pokemonJSON[0].name +
+        ", tus habilidades son: " + pokemonJSON[0].abilities +
+        ", tus movimientos son: " + pokemonJSON[0].moves +
+        ", tus estadisticas son:" + pokemonJSON[0].stats
+        + txb.value) //se envía a la IA lo que se escribe en el texbox
   }
 }, [count]); //se ejecuta cuando count aumenta
 
@@ -28,7 +38,7 @@ async function sendForm(formData) {
 }
 
 async function sendMessage(message) {
-    const updatedHistory = [...messageHistory, { sender: "user", text: message }];
+    const updatedHistory = [...messageHistory, { sender: "user", text: message }]; //... es deconstrucción
     try {
         const reply = await askGemini(updatedHistory);
         setMessageHistory([...updatedHistory, { sender: "model", text: reply }]);
@@ -63,9 +73,6 @@ async function askGemini(messageHistory) {
     const texto_respuesta_de_gemini = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "No se obtuvo respuesta del modelo."
     txa.value = texto_respuesta_de_gemini
 }
-
-
-
 
   useEffect(() => {
     let numpag = 1
@@ -119,6 +126,16 @@ async function askGemini(messageHistory) {
         }  
     }
 
+
+
+
+
+    
+
+    //MOSTRAR POKEMON AL INICIO
+
+
+
     async function obtenerpost(){
         try{
             contenedor.innerHTML = ""
@@ -135,11 +152,32 @@ async function askGemini(messageHistory) {
                                 <h4>${pokemon.name}</h1>
                                 <img src="${datospokemon.sprites.front_default}">
                                 <p><button id="${pokemon.name}">CHAT</button></p>
-                                <p><button>LIKE</button></p>			
+                                <p><button id="like ${pokemon.name}">LIKE</button></p>			
                         </div>			
                     `
 
                     setTimeout(()=>{
+                        //localStorage.clear()
+                        const valor = localStorage.getItem(`${pokemon.name}`);
+                        const like = document.getElementById(`like ${pokemon.name}`)
+                        if(valor){
+                            like.style.backgroundColor = "red";
+                            like.style.color = "yellow";
+                        }
+
+                        like.onclick = function darlike(){
+                            if(!valor){
+                                localStorage.setItem(`${pokemon.name}`, like.id);
+                                like.style.backgroundColor = "red";
+                                like.style.color = "yellow";
+                            }
+                            else if(valor){
+                                localStorage.removeItem(`${pokemon.name}`);
+                                like.style.backgroundColor = "buttonface";
+                                like.style.color = "buttontext";
+                            }
+                        }
+                        
 
                         const chat = document.getElementById(`${pokemon.name}`) //cuando se ingresa varialbe como parametro de funciones, estas se ponen entre ` `, no entre " "
                         chat.style.backgroundColor = "blue"
@@ -148,21 +186,27 @@ async function askGemini(messageHistory) {
                             let habilidades = []
                             let movimientos = []
                             let estadisticas = []
-                            let valores_base_estadisticas = []
 
                             datospokemon.abilities.forEach((abilities)=>{
                                 habilidades.push(abilities.ability.name)
-                                console.log(habilidades)
                             })        
                             datospokemon.moves.forEach((moves)=>{
                                 movimientos.push(moves.move.name)
                             })                      
                             datospokemon.stats.forEach((stats)=>{
-                                estadisticas.push(stats.stat.name)
+                                estadisticas.push(stats.stat.name + ": " + stats.base_stat)
                             })       
-                            datospokemon.stats.forEach((stats)=>{
-                                valores_base_estadisticas.push(stats.base_stat)
-                            })
+                            
+                            let pokemonJSON = [
+                                {
+                                    "name" : pokemon.name,
+                                    "abilities" : habilidades.join(", "), //transforma lista a strings separados por coma
+                                    "moves" : movimientos.join(", "), 
+                                    "stats" : estadisticas.join(", ")
+                                }
+                            ]
+                            setPokemonJSON(pokemonJSON) //le pasa dinamcamente el JSON al hook useEffect
+
                             contenedor_chat.innerHTML = ""
                             contenedor_chat.innerHTML += 
                             `
@@ -185,6 +229,7 @@ async function askGemini(messageHistory) {
                              }
                         }
 
+
                     },100)
                     
                 }
@@ -194,6 +239,15 @@ async function askGemini(messageHistory) {
             const buttonasc = document.getElementById("buttonasc")
             const buttondesc = document.getElementById("buttondesc")
 
+
+
+
+
+            //ORDENAR ASCENDENTEMENTE
+
+
+
+
             buttonasc.onclick = function ordenarasc(){
                 buttonasc.disabled = true
                 buttondesc.disabled = false
@@ -202,15 +256,16 @@ async function askGemini(messageHistory) {
                     listanombres.push(pokemon.name) //push() es para añadir elementos al final del arreglo
                 })
                 listanombres.sort()
-
+                console.log(listanombres)
                 contenedor.innerHTML = ""
                 
                 listanombres.forEach((nombre) => {
                     datos.results.forEach((pokemon) => {
                         if(pokemon.name == nombre){
                             async function obtenerpostpokemon(){
-                                const respuesta2 = await fetch(`${pokemon.url}`)
-                                const datospokemon = await respuesta2.json()
+                                const respuesta2 = await fetch(`${pokemon.url}`)    
+                                const datospokemon =  await respuesta2.json()
+
                                 contenedor.innerHTML +=
                                 `
                                     <div class="col col-md-2" id="articulo">
@@ -221,6 +276,28 @@ async function askGemini(messageHistory) {
                                     </div>					
                                 `
                                 setTimeout(()=>{
+
+                                    //localStorage.clear()
+                                    const valor = localStorage.getItem(`${pokemon.name}`);
+                                    const like = document.getElementById(`like ${pokemon.name}`)
+                                    if(valor){
+                                        like.style.backgroundColor = "red";
+                                        like.style.color = "yellow";
+                                    }
+
+                                    like.onclick = function darlike(){
+                                        if(!valor){
+                                            localStorage.setItem(`${pokemon.name}`, like.id);
+                                            like.style.backgroundColor = "red";
+                                            like.style.color = "yellow";
+                                        }
+                                        else if(valor){
+                                            localStorage.removeItem(`${pokemon.name}`);
+                                            like.style.backgroundColor = "buttonface";
+                                            like.style.color = "buttontext";
+                                        }
+                                    }
+
                                     const chat = document.getElementById(`${pokemon.name}`) //cuando se ingresa varialbe como parametro de funciones, estas so ponen entre ` `, no entre " "
                                     chat.style.backgroundColor = "blue"
                                     chat.style.color = "white"
@@ -228,7 +305,6 @@ async function askGemini(messageHistory) {
                                         let habilidades = []
                                         let movimientos = []
                                         let estadisticas = []
-                                        let valores_base_estadisticas = []
 
                                         datospokemon.abilities.forEach((abilities)=>{
                                             habilidades.push(abilities.ability.name)
@@ -238,12 +314,39 @@ async function askGemini(messageHistory) {
                                             movimientos.push(moves.move.name)
                                         })                      
                                         datospokemon.stats.forEach((stats)=>{
-                                            estadisticas.push(stats.stat.name)
-                                        })       
-                                        datospokemon.stats.forEach((stats)=>{
-                                            valores_base_estadisticas.push(stats.base_stat)
-                                        })
-                                        
+                                            estadisticas.push(stats.stat.name + ": " + stats.base_stat)
+                                        })            
+                                        let pokemonJSON = [
+                                            {
+                                                "name" : pokemon.name,
+                                                "abilities" : habilidades.join(", "), //transforma lista a strings separados por coma
+                                                "moves" : movimientos.join(", "), 
+                                                "stats" : estadisticas.join(", ")
+                                            }
+                                        ]
+                                        setPokemonJSON(pokemonJSON) //le pasa dinamcamente el JSON al hook useEffect
+                                    
+                                        contenedor_chat.innerHTML = ""
+                                        contenedor_chat.innerHTML += 
+                                        `
+                                            <div class="row">
+                                                <div class="col col-md-4">
+                                                    <h3>Chat de ${pokemon.name}</h3>
+                                                    <input id="txb" type="text" placeholder="Pregunta algo" style="align-items: center;">    
+                                                        <button id="btn">Preguntar</button>
+                                                </div>
+                                                <div class="col col-md-8">
+                                                    <textarea id="txa" style="width: 30rem; height: 5rem; resize: none;" placeholder="Respuesta del chat" disabled></textarea>
+                                                </div>
+                                            </div>
+                                        `
+                                        const btn = document.getElementById("btn")
+                                        btn.onclick = function preguntar(){ 
+                                                setCount(count + 1) //aumenta count en uno cada vez que se hace click en chat
+                                                console.log(count)
+                                                console.log(messageHistory) 
+                                        }
+                                    
                                     }
                                 },100)
                             }
@@ -252,6 +355,14 @@ async function askGemini(messageHistory) {
                     })
                 })
             }
+
+
+
+
+            //ORDENAR DESCENDENTEMENTE
+
+
+
 
             buttondesc.onclick = function ordenardesc(){
                 buttondesc.disabled = true
@@ -262,7 +373,7 @@ async function askGemini(messageHistory) {
                 })
                 listanombres.sort()
                 listanombres.reverse()
-
+                console.log(listanombres)
                 contenedor.innerHTML = ""
                 
                 listanombres.forEach((nombre) => {
@@ -281,6 +392,28 @@ async function askGemini(messageHistory) {
                                     </div>			
                                 `
                                 setTimeout(()=>{
+
+                                    //localStorage.clear()
+                                    const valor = localStorage.getItem(`${pokemon.name}`);
+                                    const like = document.getElementById(`like ${pokemon.name}`)
+                                    if(valor){
+                                        like.style.backgroundColor = "red";
+                                        like.style.color = "yellow";
+                                    }
+
+                                    like.onclick = function darlike(){
+                                        if(!valor){
+                                            localStorage.setItem(`${pokemon.name}`, like.id);
+                                            like.style.backgroundColor = "red";
+                                            like.style.color = "yellow";
+                                        }
+                                        else if(valor){
+                                            localStorage.removeItem(`${pokemon.name}`);
+                                            like.style.backgroundColor = "buttonface";
+                                            like.style.color = "buttontext";
+                                        }
+                                    }
+
                                     const chat = document.getElementById(`${pokemon.name}`) //cuando se ingresa varialbe como parametro de funciones, estas so ponen entre ` `, no entre " "
                                     chat.style.backgroundColor = "blue"
                                     chat.style.color = "white"
@@ -288,7 +421,6 @@ async function askGemini(messageHistory) {
                                         let habilidades = []
                                         let movimientos = []
                                         let estadisticas = []
-                                        let valores_base_estadisticas = []
 
                                         datospokemon.abilities.forEach((abilities)=>{
                                             habilidades.push(abilities.ability.name)
@@ -298,11 +430,38 @@ async function askGemini(messageHistory) {
                                             movimientos.push(moves.move.name)
                                         })                      
                                         datospokemon.stats.forEach((stats)=>{
-                                            estadisticas.push(stats.stat.name)
+                                            estadisticas.push(stats.stat.name + ": " + stats.base_stat)
                                         })       
-                                        datospokemon.stats.forEach((stats)=>{
-                                            valores_base_estadisticas.push(stats.base_stat)
-                                        })
+                                        let pokemonJSON = [
+                                            {
+                                                "name" : pokemon.name,
+                                                "abilities" : habilidades.join(", "), //transforma lista a strings separados por coma
+                                                "moves" : movimientos.join(", "), 
+                                                "stats" : estadisticas.join(", ")
+                                            }
+                                        ]
+                                        setPokemonJSON(pokemonJSON) //le pasa dinamcamente el JSON al hook useEffect
+
+                                        contenedor_chat.innerHTML = ""
+                                        contenedor_chat.innerHTML += 
+                                        `
+                                            <div class="row">
+                                                <div class="col col-md-4">
+                                                    <h3>Chat de ${pokemon.name}</h3>
+                                                    <input id="txb" type="text" placeholder="Pregunta algo" style="align-items: center;">    
+                                                        <button id="btn">Preguntar</button>
+                                                </div>
+                                                <div class="col col-md-8">
+                                                    <textarea id="txa" style="width: 30rem; height: 5rem; resize: none;" placeholder="Respuesta del chat" disabled></textarea>
+                                                </div>
+                                            </div>
+                                        `
+                                        const btn = document.getElementById("btn")
+                                        btn.onclick = function preguntar(){ 
+                                                setCount(count + 1) //aumenta count en uno cada vez que se hace click en chat
+                                                console.log(count)
+                                                console.log(messageHistory) 
+                                        }
                                     }
                                 },100)
                             }
@@ -317,6 +476,16 @@ async function askGemini(messageHistory) {
         }
     }
     obtenerpost() //se renderiza primera pagina al inicio
+
+
+
+
+
+
+
+    //BUSCAR EL POKEMON
+
+
 
     async function obtenerpostParaBuscar(){
         try{
@@ -344,6 +513,28 @@ async function askGemini(messageHistory) {
                                 </div>				
                             `
                             setTimeout(()=>{
+
+                                //localStorage.clear()
+                                const valor = localStorage.getItem(`${pokemon.name}`);
+                                const like = document.getElementById(`like ${pokemon.name}`)
+                                if(valor){
+                                    like.style.backgroundColor = "red";
+                                    like.style.color = "yellow";
+                                }
+
+                                like.onclick = function darlike(){
+                                    if(!valor){
+                                        localStorage.setItem(`${pokemon.name}`, like.id);
+                                        like.style.backgroundColor = "red";
+                                        like.style.color = "yellow";
+                                    }
+                                    else if(valor){
+                                        localStorage.removeItem(`${pokemon.name}`);
+                                        like.style.backgroundColor = "buttonface";
+                                        like.style.color = "buttontext";
+                                    }
+                                }
+
                                 const chat = document.getElementById(`${pokemon.name}`) //cuando se ingresa varialbe como parametro de funciones, estas so ponen entre ` `, no entre " "
                                 chat.style.backgroundColor = "blue"
                                 chat.style.color = "white"
@@ -351,8 +542,7 @@ async function askGemini(messageHistory) {
                                     let habilidades = []
                                     let movimientos = []
                                     let estadisticas = []
-                                    let valores_base_estadisticas = []
-
+ 
                                     datospokemon.abilities.forEach((abilities)=>{
                                         habilidades.push(abilities.ability.name)
                                         console.log(habilidades)
@@ -361,11 +551,38 @@ async function askGemini(messageHistory) {
                                         movimientos.push(moves.move.name)
                                     })                      
                                     datospokemon.stats.forEach((stats)=>{
-                                        estadisticas.push(stats.stat.name)
+                                        estadisticas.push(stats.stat.name + ": " + stats.base_stat)
                                     })       
-                                    datospokemon.stats.forEach((stats)=>{
-                                        valores_base_estadisticas.push(stats.base_stat)
-                                    })
+                                    let pokemonJSON = [
+                                        {
+                                            "name" : pokemon.name,
+                                            "abilities" : habilidades.join(", "), //transforma lista a strings separados por coma
+                                            "moves" : movimientos.join(", "), 
+                                            "stats" : estadisticas.join(", ")
+                                        }
+                                    ]
+                                    setPokemonJSON(pokemonJSON) //le pasa dinamcamente el JSON al hook useEffect
+
+                                    contenedor_chat.innerHTML = ""
+                                    contenedor_chat.innerHTML += 
+                                    `
+                                        <div class="row">
+                                            <div class="col col-md-4">
+                                                <h3>Chat de ${pokemon.name}</h3>
+                                                <input id="txb" type="text" placeholder="Pregunta algo" style="align-items: center;">    
+                                                    <button id="btn">Preguntar</button>
+                                            </div>
+                                            <div class="col col-md-8">
+                                                <textarea id="txa" style="width: 30rem; height: 5rem; resize: none;" placeholder="Respuesta del chat" disabled></textarea>
+                                            </div>
+                                        </div>
+                                    `
+                                    const btn = document.getElementById("btn")
+                                    btn.onclick = function preguntar(){ 
+                                            setCount(count + 1) //aumenta count en uno cada vez que se hace click en chat
+                                            console.log(count)
+                                            console.log(messageHistory) 
+                                    }
                                 }
                             },100)
                         }
@@ -385,6 +602,8 @@ async function askGemini(messageHistory) {
     
   }, [])
  
+
+
 
 
 
